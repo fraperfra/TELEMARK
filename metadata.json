@@ -1,0 +1,8 @@
+{
+  "name": "ImmoCRM Telemarketing",
+  "description": "A high-performance real estate telemarketing CRM with lead scoring, call tracking, and advanced property management.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
