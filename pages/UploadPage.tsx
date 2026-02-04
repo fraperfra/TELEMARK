@@ -4,7 +4,6 @@ import { CloudUpload, ChevronRight, CheckCircle2, AlertTriangle, XCircle, FileSp
 import { ViewState } from '../types';
 import { supabase, handleSupabaseError } from '../lib/supabase';
 import Papa from 'papaparse';
-import * as XLSX from 'xlsx';
 
 interface UploadPageProps {
   onCompleteNavigation: (view: ViewState) => void;
@@ -65,7 +64,10 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
         });
       });
     } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
+      // Dynamic import to avoid bundling `xlsx` in the main bundle and allow
+      // easier replacement if a patched version becomes available.
       const ab = await file.arrayBuffer();
+      const XLSX = await import('xlsx');
       const wb = XLSX.read(ab, { type: 'array' });
       const sheet = wb.SheetNames[0];
       const data = XLSX.utils.sheet_to_json(wb.Sheets[sheet], { defval: '' }) as any[];
