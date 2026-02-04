@@ -14,6 +14,7 @@ import CalendarPage from '@/pages/CalendarPage';
 import CampaignsPage from '@/pages/CampaignsPage';
 import DialerPage from '@/pages/DialerPage';
 import SettingsPage from '@/pages/SettingsPage';
+import DiagnosticsPage from '@/pages/DiagnosticsPage';
 import { OwnersListPage } from '@/pages/OwnersManagementPage';
 
 // Layout
@@ -46,6 +47,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/diagnostics" element={<DiagnosticsPage />} />
 
             {/* Protected routes */}
             <Route
