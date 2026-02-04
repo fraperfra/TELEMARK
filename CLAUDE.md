@@ -8,6 +8,16 @@ ImmoCRM Telemarketing is a web-based real estate CRM for telemarketing teams. It
 
 **Stack:** React 19 + TypeScript + Vite + Supabase (PostgreSQL) + Tailwind CSS (CDN)
 
+**Key Libraries:**
+- **UI:** Radix UI primitives, Lucide icons, class-variance-authority
+- **Forms:** react-hook-form + zod validation
+- **Calendar:** FullCalendar (daygrid, timegrid, interaction)
+- **Charts:** Recharts
+- **Date:** date-fns
+- **VoIP:** Twilio Voice SDK
+- **AI:** OpenAI SDK
+- **Payments:** Stripe
+
 ## Development Commands
 
 ```bash
@@ -19,11 +29,17 @@ npm run preview  # Preview production build
 
 ## Environment Setup
 
-Create `.env.local` with:
+Create `.env.local` with (vedi `.env.example`):
 ```
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-GEMINI_API_KEY=optional_for_future_ai_features
+# Required
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Optional - per funzionalita avanzate
+VITE_OPENAI_API_KEY=your_openai_api_key
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+VITE_TWILIO_ACCOUNT_SID=your_twilio_sid
+VITE_GEMINI_API_KEY=your_gemini_key
 ```
 
 The app shows a setup screen if Supabase is not configured. Fallback credentials exist in `lib/supabase.ts` for demo purposes.
@@ -44,6 +60,10 @@ The app shows a setup screen if Supabase is not configured. Fallback credentials
 | `types.ts` | All TypeScript interfaces (Owner, Property, CallLog, Appointment) |
 | `constants.tsx` | Mock data fallback and color palette |
 | `lib/supabase.ts` | Supabase client configuration |
+| `lib/utils.ts` | Utility functions (cn for Tailwind class merging) |
+| `lib/openai.ts` | OpenAI client configuration |
+| `lib/stripe.ts` | Stripe client configuration |
+| `lib/twilio.ts` | Twilio Voice SDK setup |
 
 ### Pages (in `pages/`)
 

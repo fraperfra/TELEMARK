@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import { ArrowLeft, Phone, Mail, Calendar, MapPin, Tag, Plus, MessageSquare, History, Building2, TrendingUp, ChevronRight, Edit3 } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, Calendar, MapPin, Tag, Plus, MessageSquare, History, Building2, TrendingUp, ChevronRight, Edit3, Info } from 'lucide-react';
 import { Owner, ModalType } from '../types';
+import { getCategoria, getCategoriaIcona, getCategoriaColore } from '../lib/categorieCatastali';
 
 interface OwnerDetailProps {
   owner: Owner;
@@ -56,7 +57,7 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
               <p className="text-gray-500 text-sm font-medium">ID: {owner.taxCode}</p>
 
               <div className="mt-6 flex flex-wrap justify-center gap-2">
-                {owner.tags.map((tag, i) => (
+                {(owner.tags || []).map((tag, i) => (
                   <span key={i} className="px-3 py-1 bg-gray-50 text-gray-500 text-[10px] font-bold uppercase rounded-full border border-gray-100">
                     #{tag}
                   </span>
@@ -64,9 +65,10 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
               </div>
 
               <div className="mt-8 space-y-4 text-left">
-                {owner.phones.map((phone, i) => (
-                  <button 
-                    key={i} 
+                {/* Telefoni - supporta sia phones[] che phone1/2/3 */}
+                {[owner.phone1, owner.phone2, owner.phone3, ...(owner.phones || [])].filter((p, i, arr) => p && arr.indexOf(p) === i).map((phone, i) => (
+                  <button
+                    key={i}
                     onClick={() => onOpenModal('CALL_OWNER', owner)}
                     className="w-full flex items-center gap-4 p-3 rounded-xl bg-gray-50 hover:bg-blue-50 text-gray-700 hover:text-blue-600 transition-all group active:scale-[0.98]"
                   >
@@ -74,6 +76,7 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
                       <Phone className="w-4 h-4" />
                     </div>
                     <span className="font-semibold text-sm">{phone}</span>
+                    <span className="text-[10px] text-gray-400 font-bold">TEL {i + 1}</span>
                     <ChevronRight className="ml-auto w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" />
                   </button>
                 ))}
@@ -81,9 +84,72 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
                   <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center">
                     <Mail className="w-4 h-4" />
                   </div>
-                  <span className="font-semibold text-sm truncate">{owner.email}</span>
+                  <span className="font-semibold text-sm truncate">{owner.email || '—'}</span>
                 </button>
+                {/* Indirizzo immobile */}
+                {(owner.address || owner.civico) && (
+                  <div className="w-full flex items-center gap-4 p-3 rounded-xl bg-gray-50 text-gray-700">
+                    <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <span className="font-semibold text-sm">{owner.address}{owner.civico ? `, ${owner.civico}` : ''}</span>
+                  </div>
+                )}
+                {/* Data di nascita */}
+                {owner.birthDate && (
+                  <div className="w-full flex items-center gap-4 p-3 rounded-xl bg-gray-50 text-gray-700">
+                    <div className="w-8 h-8 rounded-lg bg-white shadow-sm flex items-center justify-center">
+                      <Calendar className="w-4 h-4" />
+                    </div>
+                    <span className="font-semibold text-sm">{new Date(owner.birthDate).toLocaleDateString('it-IT')}</span>
+                  </div>
+                )}
               </div>
+
+              {/* Info Immobile importato da CSV */}
+              {(owner.categoria || owner.consistenza || owner.quota) && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                  <h4 className="text-xs font-bold text-blue-700 uppercase mb-3">Dati Catastali</h4>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    {owner.categoria && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase">Categoria</p>
+                        <p className="text-sm font-bold text-gray-800">{owner.categoria}</p>
+                      </div>
+                    )}
+                    {owner.consistenza && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase">Consistenza</p>
+                        <p className="text-sm font-bold text-gray-800">{owner.consistenza}</p>
+                      </div>
+                    )}
+                    {owner.quota && (
+                      <div>
+                        <p className="text-[10px] text-gray-500 font-bold uppercase">Quota</p>
+                        <p className="text-sm font-bold text-gray-800">{owner.quota}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Esito e Note */}
+              {(owner.esitoChiamata || owner.notes) && (
+                <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-100">
+                  {owner.esitoChiamata && (
+                    <div className="mb-2">
+                      <span className="text-[10px] font-bold text-amber-700 uppercase">Ultimo Esito: </span>
+                      <span className="text-sm font-bold text-gray-800">{owner.esitoChiamata}</span>
+                    </div>
+                  )}
+                  {owner.notes && (
+                    <div>
+                      <span className="text-[10px] font-bold text-amber-700 uppercase">Note: </span>
+                      <span className="text-sm text-gray-700">{owner.notes}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -164,33 +230,75 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-4">
                   <h4 className="text-xl font-bold text-gray-900">Patrimonio Immobiliare</h4>
-                  <button className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100">
+                  <button onClick={() => onOpenModal('ADD_PROPERTY', owner)} className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100">
                     <Plus className="w-4 h-4" /> Aggiungi
                   </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {owner.properties.map((p) => (
-                    <div key={p.id} className="p-5 border border-gray-100 rounded-2xl hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all group">
-                      <div className="w-full h-32 bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
-                         <img src={`https://picsum.photos/seed/${p.id}/400/200`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Immobile" />
-                         <span className="absolute top-2 left-2 px-2 py-1 bg-white/90 backdrop-blur rounded-lg text-[10px] font-bold text-gray-800 shadow-sm">{p.category}</span>
-                      </div>
-                      <h5 className="font-bold text-gray-900 flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-blue-500" />
-                        {p.address}
-                      </h5>
-                      <div className="mt-4 flex justify-between items-end">
-                        <div>
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">Valore Stimato</p>
-                          <p className="text-lg font-bold text-blue-600">€ {p.estimatedValue.toLocaleString()}</p>
+                  {(owner.properties || []).map((p) => {
+                    const categoriaInfo = getCategoria(p.category);
+                    const categoriaIcona = getCategoriaIcona(p.category);
+                    const categoriaColore = getCategoriaColore(p.category);
+
+                    const colorClasses: Record<string, string> = {
+                      blue: 'bg-blue-50 text-blue-700 border-blue-200',
+                      purple: 'bg-purple-50 text-purple-700 border-purple-200',
+                      green: 'bg-green-50 text-green-700 border-green-200',
+                      orange: 'bg-orange-50 text-orange-700 border-orange-200',
+                      red: 'bg-red-50 text-red-700 border-red-200',
+                      gray: 'bg-gray-50 text-gray-700 border-gray-200',
+                    };
+
+                    return (
+                      <div key={p.id} className="p-5 border border-gray-100 rounded-2xl hover:border-blue-200 hover:shadow-lg hover:shadow-blue-50 transition-all group">
+                        <div className="w-full h-32 bg-gray-100 rounded-xl mb-4 overflow-hidden relative">
+                          <img src={`https://picsum.photos/seed/${p.id}/400/200`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="Immobile" />
+                          <span className="absolute top-2 left-2 px-2 py-1 bg-white/90 backdrop-blur rounded-lg text-xs font-bold text-gray-800 shadow-sm flex items-center gap-1">
+                            <span>{categoriaIcona}</span>
+                            {p.category}
+                          </span>
                         </div>
-                        <div className="text-right">
-                          <p className="text-[10px] text-gray-400 font-bold uppercase">Quota</p>
-                          <p className="text-sm font-bold text-gray-700">{p.share}%</p>
+
+                        <h5 className="font-bold text-gray-900 flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-blue-500" />
+                          {p.address}
+                        </h5>
+
+                        {/* Tipo immobile da categoria catastale */}
+                        {categoriaInfo && (
+                          <div className={`mt-3 p-3 rounded-xl border ${colorClasses[categoriaColore] || colorClasses.gray}`}>
+                            <div className="flex items-start gap-2">
+                              <span className="text-lg">{categoriaIcona}</span>
+                              <div>
+                                <p className="text-xs font-bold">{categoriaInfo.codice}</p>
+                                <p className="text-[11px] opacity-80">{categoriaInfo.descrizione}</p>
+                                <p className="text-[9px] mt-1 opacity-60">Gruppo {categoriaInfo.gruppo}: {categoriaInfo.gruppoDescrizione}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Dati catastali */}
+                        <div className="mt-3 grid grid-cols-2 gap-2">
+                          <div className="p-2 bg-gray-50 rounded-lg text-center">
+                            <p className="text-[9px] text-gray-400 font-bold uppercase">Consistenza</p>
+                            <p className="text-sm font-bold text-gray-700">{p.consistenza || '—'}</p>
+                          </div>
+                          <div className="p-2 bg-gray-50 rounded-lg text-center">
+                            <p className="text-[9px] text-gray-400 font-bold uppercase">Quota</p>
+                            <p className="text-sm font-bold text-gray-700">{p.share}%</p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex justify-between items-end">
+                          <div>
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Valore Stimato</p>
+                            <p className="text-lg font-bold text-blue-600">€ {(p.estimatedValue || 0).toLocaleString()}</p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -207,7 +315,7 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
                   </button>
                 </div>
                 <div className="relative space-y-8 before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-blue-500 before:via-gray-100 before:to-transparent">
-                  {owner.calls.map((c, i) => (
+                  {(owner.calls || []).map((c, i) => (
                     <div key={c.id} className="relative flex items-start gap-8 group">
                       <div className="absolute left-0 mt-1.5 w-10 h-10 rounded-xl bg-white border-2 border-blue-500 flex items-center justify-center z-10 shadow-sm group-hover:scale-110 transition-transform">
                         <History className="w-5 h-5 text-blue-500" />
@@ -234,21 +342,169 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
               </div>
             )}
             
-            {(activeTab === 'appuntamenti' || activeTab === 'note') && (
-              <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
-                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-3xl">
-                  {activeTab === 'appuntamenti' ? '📅' : '📝'}
+            {activeTab === 'appuntamenti' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xl font-bold text-gray-900">Follow-up & Appuntamenti</h4>
+                  <button
+                    onClick={() => onOpenModal('ADD_APPOINTMENT', owner)}
+                    className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100"
+                  >
+                    <Plus className="w-4 h-4" /> Nuovo Appuntamento
+                  </button>
                 </div>
-                <div>
-                  <h5 className="text-lg font-bold text-gray-900">Ancora nulla qui</h5>
-                  <p className="text-gray-500 text-sm">Inizia a pianificare il futuro di questo lead.</p>
+
+                {(owner.appointments && owner.appointments.length > 0) ? (
+                  <div className="space-y-6">
+                    {owner.appointments.map((apt) => (
+                      <div key={apt.id} className="border border-gray-100 rounded-2xl overflow-hidden hover:shadow-lg transition-all">
+                        {/* Header appuntamento */}
+                        <div className={`p-4 flex items-center justify-between ${
+                          apt.type === 'VISIT' ? 'bg-green-50' : apt.type === 'CALL' ? 'bg-blue-50' : 'bg-purple-50'
+                        }`}>
+                          <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white ${
+                              apt.type === 'VISIT' ? 'bg-green-500' : apt.type === 'CALL' ? 'bg-blue-500' : 'bg-purple-500'
+                            }`}>
+                              {apt.type === 'VISIT' ? '🏠' : apt.type === 'CALL' ? '📞' : '📹'}
+                            </div>
+                            <div>
+                              <h5 className="font-bold text-gray-900">{apt.title}</h5>
+                              <p className="text-xs text-gray-500">
+                                {new Date(apt.date).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                                {' alle '}
+                                {new Date(apt.date).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                            apt.type === 'VISIT' ? 'bg-green-100 text-green-700' : apt.type === 'CALL' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                          }`}>
+                            {apt.type}
+                          </span>
+                        </div>
+
+                        {/* Script section */}
+                        {(apt.whatsappScript || apt.voiceScript) && (
+                          <div className="p-4 space-y-4">
+                            {/* WhatsApp Script */}
+                            {apt.whatsappScript && (
+                              <div className="bg-green-50 border border-green-100 rounded-xl p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">💬</span>
+                                    <h6 className="text-xs font-bold text-green-700 uppercase">Script WhatsApp</h6>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(apt.whatsappScript || '');
+                                    }}
+                                    className="text-[10px] font-bold text-green-600 hover:text-green-800 flex items-center gap-1"
+                                  >
+                                    📋 Copia
+                                  </button>
+                                </div>
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{apt.whatsappScript}</p>
+                                <a
+                                  href={`https://wa.me/${(owner.phone1 || owner.phones?.[0] || '').replace(/\D/g, '')}?text=${encodeURIComponent(apt.whatsappScript)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="mt-3 inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-green-700 transition-all"
+                                >
+                                  Apri WhatsApp
+                                </a>
+                              </div>
+                            )}
+
+                            {/* Voice Script */}
+                            {apt.voiceScript && (
+                              <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">🎙️</span>
+                                    <h6 className="text-xs font-bold text-blue-700 uppercase">Script Chiamata Vocale</h6>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(apt.voiceScript || '');
+                                    }}
+                                    className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                  >
+                                    📋 Copia
+                                  </button>
+                                </div>
+                                <p className="text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{apt.voiceScript}</p>
+                                <button
+                                  onClick={() => onOpenModal('CALL_OWNER', owner)}
+                                  className="mt-3 inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition-all"
+                                >
+                                  <Phone className="w-3 h-3" /> Avvia Chiamata
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
+                    <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center text-3xl">📅</div>
+                    <div>
+                      <h5 className="text-lg font-bold text-gray-900">Nessun follow-up programmato</h5>
+                      <p className="text-gray-500 text-sm">Importa un file con esiti chiamata o crea manualmente un appuntamento.</p>
+                    </div>
+                    <button
+                      onClick={() => onOpenModal('ADD_APPOINTMENT', owner)}
+                      className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 active:scale-95 transition-all"
+                    >
+                      Aggiungi appuntamento
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'note' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-xl font-bold text-gray-900">Note & Informazioni</h4>
+                  <button
+                    onClick={() => onOpenModal('EDIT_OWNER', owner)}
+                    className="flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100"
+                  >
+                    <Edit3 className="w-4 h-4" /> Modifica
+                  </button>
                 </div>
-                <button 
-                  onClick={() => onOpenModal(activeTab === 'appuntamenti' ? 'ADD_APPOINTMENT' : 'EDIT_OWNER', owner)}
-                  className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 active:scale-95 transition-all"
-                >
-                  Aggiungi {activeTab}
-                </button>
+
+                {/* Esito Chiamata */}
+                {owner.esitoChiamata && (
+                  <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl">
+                    <h5 className="text-xs font-bold text-amber-700 uppercase mb-2">Ultimo Esito Chiamata</h5>
+                    <p className="text-lg font-bold text-gray-800">{owner.esitoChiamata}</p>
+                  </div>
+                )}
+
+                {/* Note */}
+                {owner.notes ? (
+                  <div className="p-5 bg-gray-50 border border-gray-200 rounded-2xl">
+                    <h5 className="text-xs font-bold text-gray-500 uppercase mb-2">Note</h5>
+                    <p className="text-gray-700 whitespace-pre-wrap">{owner.notes}</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                    <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-2xl">📝</div>
+                    <p className="text-gray-500 text-sm">Nessuna nota presente</p>
+                  </div>
+                )}
+
+                {/* Azione Suggerita */}
+                {owner.suggestedAction && (
+                  <div className="p-5 bg-blue-50 border border-blue-200 rounded-2xl">
+                    <h5 className="text-xs font-bold text-blue-700 uppercase mb-2">Azione Suggerita</h5>
+                    <p className="text-gray-700">{owner.suggestedAction}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

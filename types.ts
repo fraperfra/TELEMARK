@@ -5,6 +5,7 @@ export interface Property {
   id: string;
   address: string;
   category: string;
+  consistenza?: string;
   estimatedValue: number;
   share: number;
 }
@@ -23,6 +24,8 @@ export interface Appointment {
   type: 'VISIT' | 'CALL' | 'VIDEO' | 'SIGNING';
   title: string;
   location?: string;
+  whatsappScript?: string;
+  voiceScript?: string;
 }
 
 export interface Owner {
@@ -35,6 +38,9 @@ export interface Owner {
   age?: number;
   phones?: string[];
   phone?: string;
+  phone1?: string;
+  phone2?: string;
+  phone3?: string;
   email?: string;
   temperature: LeadTemperature;
   score: number;
@@ -45,14 +51,22 @@ export interface Owner {
   properties?: Property[];
   calls?: CallLog[];
   appointments?: Appointment[];
+  // Campi importazione CSV
   address?: string;
+  civico?: string;
+  consistenza?: string;
+  categoria?: string;
+  quota?: string;
+  esitoChiamata?: string;
   notes?: string;
   created_at?: string;
-  updated_at?: string;}
+  updated_at?: string;
+}
 
 export type ViewState = 'DASHBOARD' | 'OWNERS_LIST' | 'OWNER_DETAIL' | 'CALENDAR' | 'UPLOAD' | 'SETTINGS';
+export type SettingsTab = 'profile' | 'agency' | 'team' | 'notifications' | 'security';
 
-export type ModalType = 'ADD_OWNER' | 'CALL_OWNER' | 'ADD_APPOINTMENT' | 'EDIT_OWNER' | 'BULK_CALL' | null;
+export type ModalType = 'ADD_OWNER' | 'CALL_OWNER' | 'ADD_APPOINTMENT' | 'EDIT_OWNER' | 'BULK_CALL' | 'ADD_PROPERTY' | null;
 
 export interface ModalState {
   type: ModalType;

@@ -1,0 +1,39 @@
+{
+  "name": "ImmoCRM Telemarketing",
+  "short_name": "ImmoCRM",
+  "description": "CRM Telemarketing per Agenzie Immobiliari",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F9FAFB",
+  "theme_color": "#3B82F6",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Nuova Chiamata",
+      "short_name": "Chiama",
+      "description": "Avvia una nuova chiamata",
+      "url": "/?action=call"
+    },
+    {
+      "name": "Lista Proprietari",
+      "short_name": "Proprietari",
+      "description": "Visualizza lista proprietari",
+      "url": "/?view=owners"
+    }
+  ]
+}

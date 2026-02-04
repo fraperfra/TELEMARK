@@ -5,10 +5,20 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const supabaseUrl = env.SUPABASE_URL || env.VITE_SUPABASE_URL || 'https://cokyqhfxvvmrtkmlgcjm.supabase.co';
     return {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/supabase': {
+            target: supabaseUrl,
+            changeOrigin: true,
+            secure: true,
+            ws: true,
+            rewrite: (path) => path.replace(/^\/supabase/, ''),
+          },
+        },
       },
       plugins: [react(), tsconfigPaths()],
       build: {

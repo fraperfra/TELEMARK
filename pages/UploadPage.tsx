@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { CloudUpload, ChevronRight, CheckCircle2, AlertTriangle, XCircle, FileSpreadsheet, Loader2, Sparkles, Database } from 'lucide-react';
 import { ViewState } from '../types';
 import { supabase, handleSupabaseError } from '../lib/supabase';
-import Papa from 'papaparse';
+import { parse } from 'csv-parse/browser/esm/sync';
 
 interface UploadPageProps {
   onCompleteNavigation: (view: ViewState) => void;
@@ -43,7 +43,8 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
   const [duplicateCount, setDuplicateCount] = useState(0);
   // Known DB columns in `owners` (fallback when table empty)
   const knownDbFields = [
-    'firstName','lastName','taxCode','email','birthDate','temperature','score','propertiesCount','lastContact','suggestedAction','tags','created_at'
+    'firstName','lastName','taxCode','email','birthDate','temperature','score','propertiesCount','lastContact','suggestedAction','tags','created_at',
+    'address','civico','consistenza','categoria','quota','phone1','phone2','phone3','esitoChiamata','notes'
   ];
   const [dbFields, setDbFields] = useState<string[]>(knownDbFields);
 
@@ -52,25 +53,49 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
     setParsingError(null);
     const name = file.name.toLowerCase();
     if (name.endsWith('.csv')) {
-      return new Promise<any[]>((resolve, reject) => {
-        Papa.parse(file, {
-          header: true,
-          skipEmptyLines: true,
-          dynamicTyping: false,
-          complete: (results: any) => {
-            resolve(results.data as any[]);
-          },
-          error: (err) => reject(err)
-        });
-      });
+      const text = await file.text();
+      return parse(text, {
+        columns: true,
+        skip_empty_lines: true,
+        trim: true,
+        bom: true,
+      }) as any[];
     } else if (name.endsWith('.xlsx') || name.endsWith('.xls')) {
-      // Dynamic import to avoid bundling `xlsx` in the main bundle and allow
-      // easier replacement if a patched version becomes available.
-      const ab = await file.arrayBuffer();
-      const XLSX = await import('xlsx');
-      const wb = XLSX.read(ab, { type: 'array' });
-      const sheet = wb.SheetNames[0];
-      const data = XLSX.utils.sheet_to_json(wb.Sheets[sheet], { defval: '' }) as any[];
+      // Using ExcelJS as a secure alternative to xlsx (SheetJS)
+      const ExcelJS = await import('exceljs');
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(await file.arrayBuffer());
+      const worksheet = workbook.worksheets[0];
+      
+      if (!worksheet) {
+        throw new Error('No worksheet found in the Excel file');
+      }
+      
+      // Convert worksheet to JSON format similar to xlsx output
+      const data: any[] = [];
+      const headers: string[] = [];
+      
+      // Get headers from first row
+      worksheet.getRow(1).eachCell((cell, colNumber) => {
+        headers.push(cell.text || `Column${colNumber}`);
+      });
+      
+      // Process data rows starting from row 2
+      for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
+        const row = worksheet.getRow(rowNumber);
+        const rowData: any = {};
+        
+        headers.forEach((header, index) => {
+          const cell = row.getCell(index + 1);
+          rowData[header] = cell.text || '';
+        });
+        
+        // Only add non-empty rows
+        if (Object.values(rowData).some(value => value !== '')) {
+          data.push(rowData);
+        }
+      }
+      
       return data;
     }
     throw new Error('Formato file non supportato');
@@ -89,24 +114,39 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
       setParsedRows(rows);
       const detectedHeaders = Object.keys(rows[0]);
       setHeaders(detectedHeaders);
-      // Auto-map heuristics
+      // Auto-map heuristics - mappatura automatica colonne CSV
       const autoMap: Record<string,string> = {};
+      let phoneIndex = 1;
       detectedHeaders.forEach(h => {
-        const lh = h.toLowerCase();
-        if (lh.includes('nome')) autoMap[h] = 'firstName';
-        else if (lh.includes('cognome')) autoMap[h] = 'lastName';
-        else if (lh.includes('codice') || lh.includes('fisc')) autoMap[h] = 'taxCode';
-        else if (lh.includes('cell') || lh.includes('tel') || lh.includes('telefono') || lh.includes('mobile')) autoMap[h] = 'phone1';
+        const lh = h.toLowerCase().trim();
+        // Mappature esatte per le colonne dell'utente
+        if (lh === 'nome') autoMap[h] = 'firstName';
+        else if (lh === 'cognome') autoMap[h] = 'lastName';
+        else if (lh === 'codice fiscale' || lh.includes('codice') && lh.includes('fisc')) autoMap[h] = 'taxCode';
+        else if (lh === 'indirizzo') autoMap[h] = 'address';
+        else if (lh === 'civico') autoMap[h] = 'civico';
+        else if (lh === 'consistenza') autoMap[h] = 'consistenza';
+        else if (lh === 'categoria') autoMap[h] = 'categoria';
+        else if (lh === 'data nascita' || lh.includes('nasc')) autoMap[h] = 'birthDate';
+        else if (lh === 'quota') autoMap[h] = 'quota';
+        else if (lh === 'cellulare' || lh === 'cellulare1') autoMap[h] = 'phone1';
+        else if (lh === 'cellulare2') autoMap[h] = 'phone2';
+        else if (lh === 'cellulare3') autoMap[h] = 'phone3';
+        else if (lh === 'nr. immobili' || lh.includes('immob') || (lh.includes('nr') && lh.includes('immob'))) autoMap[h] = 'propertiesCount';
+        else if (lh === 'esito chiamata' || lh.includes('esito')) autoMap[h] = 'esitoChiamata';
+        else if (lh === 'note') autoMap[h] = 'notes';
         else if (lh.includes('email')) autoMap[h] = 'email';
-        else if (lh.includes('nasc')) autoMap[h] = 'birthDate';
-        else if (lh.includes('immob') || lh.includes('nr') || lh.includes('conteggio')) autoMap[h] = 'propertiesCount';
-        else if (lh.includes('note') || lh.includes('esito')) autoMap[h] = 'suggestedAction';
+        // Fallback per telefoni generici
+        else if (lh.includes('cell') || lh.includes('tel') || lh.includes('telefono') || lh.includes('mobile')) {
+          autoMap[h] = `phone${phoneIndex}`;
+          phoneIndex = Math.min(phoneIndex + 1, 3);
+        }
         else autoMap[h] = 'ignore';
       });
       setMapping(autoMap);
       // try fetching existing fields from DB by selecting one row
       try {
-        const { data } = await supabase.from('owners').select().limit(1).single();
+        const { data } = await supabase.from('owners').select().limit(1).maybeSingle();
         if (data) {
           const keys = Object.keys(data as Record<string, any>);
           setDbFields(Array.from(new Set([...knownDbFields, ...keys])));
@@ -138,18 +178,48 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
       birthDate: null,
       propertiesCount: 0,
       suggestedAction: null,
+      // Nuovi campi per importazione completa
+      address: null,
+      civico: null,
+      consistenza: null,
+      categoria: null,
+      quota: null,
+      phone1: null,
+      phone2: null,
+      phone3: null,
+      esitoChiamata: null,
+      notes: null,
       phones: [] as string[],
     };
     Object.keys(row).forEach(h => {
       const field = mapping[h];
       const v = row[h];
       if (!field || field === 'ignore') return;
-      if (field === 'propertiesCount') owner.propertiesCount = Number(v) || 0;
-      else if (field === 'phone1' || field === 'phone2' || field === 'phone3') {
-        if (v && String(v).trim() !== '') owner.phones.push(String(v).trim());
-      } else if (field === 'birthDate') {
+      if (field === 'propertiesCount') {
+        const n = Number(v);
+        const safe = Number.isFinite(n) ? Math.max(0, Math.min(2147483647, Math.trunc(n))) : 0;
+        owner.propertiesCount = safe;
+      }
+      else if (field === 'phone1') {
+        const phone = v && String(v).trim() !== '' ? String(v).trim() : null;
+        owner.phone1 = phone;
+        if (phone) owner.phones.push(phone);
+      }
+      else if (field === 'phone2') {
+        const phone = v && String(v).trim() !== '' ? String(v).trim() : null;
+        owner.phone2 = phone;
+        if (phone) owner.phones.push(phone);
+      }
+      else if (field === 'phone3') {
+        const phone = v && String(v).trim() !== '' ? String(v).trim() : null;
+        owner.phone3 = phone;
+        if (phone) owner.phones.push(phone);
+      }
+      else if (field === 'birthDate') {
         owner.birthDate = parseDateValue(v);
-      } else owner[field] = v || null;
+      } else {
+        owner[field] = v && String(v).trim() !== '' ? String(v).trim() : null;
+      }
     });
     // Ensure minimal defaults
     owner.firstName = owner.firstName || 'N/A';
@@ -218,6 +288,155 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
       setDuplicateCount(dCount);
     };
 
+  // Funzione per convertire quota (es. "500/1000") in percentuale
+  const parseQuotaToShare = (quota: string | null): number => {
+    if (!quota) return 100;
+    const q = String(quota).trim();
+    // Formato "500/1000"
+    const match = q.match(/^(\d+)\s*\/\s*(\d+)$/);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      const den = parseInt(match[2], 10);
+      if (den > 0) return Math.round((num / den) * 100);
+    }
+    // Formato percentuale "50%" o "50"
+    const pct = parseFloat(q.replace('%', ''));
+    if (!isNaN(pct)) return Math.min(100, Math.max(0, Math.round(pct)));
+    return 100;
+  };
+
+  // Funzione per generare script WhatsApp e vocale
+  const generateScripts = (esito: string, ownerName: string, ownerData: any) => {
+    const firstName = ownerData.firstName || ownerName.split(' ')[0];
+    const address = ownerData.address ? `${ownerData.address}${ownerData.civico ? ' ' + ownerData.civico : ''}` : 'il suo immobile';
+
+    const scripts: Record<string, { whatsapp: string; voice: string }> = {
+      RICHIAMARE: {
+        whatsapp: `Buongiorno ${firstName}, sono [NOME] di [AGENZIA]. La ricontatto come concordato riguardo ${address}. Quando Le farebbe comodo un breve colloquio telefonico? Resto a disposizione.`,
+        voice: `Buongiorno, parlo con il Signor/la Signora ${firstName}? Sono [NOME] di [AGENZIA]. La richiamo come avevamo concordato nella nostra precedente conversazione riguardo al suo immobile in ${address}. Avrebbe qualche minuto per parlarne? Vorrei capire meglio le sue esigenze e come possiamo esserle utili.`
+      },
+      INTERESSATO: {
+        whatsapp: `Gentile ${firstName}, grazie per l'interesse mostrato! Sono [NOME] di [AGENZIA]. Come discusso, Le scrivo per organizzare un incontro e valutare insieme le migliori opportunità per ${address}. Quando sarebbe disponibile?`,
+        voice: `Buongiorno ${firstName}, sono [NOME] di [AGENZIA]. La chiamo per ringraziarla dell'interesse mostrato riguardo alla possibile vendita di ${address}. Sarei lieto di fissare un appuntamento per una valutazione gratuita e senza impegno. Quando Le farebbe comodo? Potremmo incontrarci direttamente presso l'immobile.`
+      },
+      APPUNTAMENTO: {
+        whatsapp: `Buongiorno ${firstName}, Le confermo il nostro appuntamento per la visita di ${address}. La aspetto il [DATA] alle [ORA]. Per qualsiasi necessità mi contatti pure. A presto! - [NOME], [AGENZIA]`,
+        voice: `Buongiorno ${firstName}, sono [NOME] di [AGENZIA]. La chiamo per confermare il nostro appuntamento per la visita dell'immobile in ${address}. Sarò da Lei il [DATA] alle [ORA]. Nel frattempo, se avesse domande o necessità di spostare l'appuntamento, non esiti a contattarmi. Grazie e a presto.`
+      },
+      NON_RISPONDE: {
+        whatsapp: `Buongiorno ${firstName}, sono [NOME] di [AGENZIA]. Ho provato a contattarla telefonicamente senza successo. La contatto per una valutazione gratuita del suo immobile in ${address}. Mi faccia sapere quando posso richiamarla. Grazie!`,
+        voice: `Buongiorno, cercavo il Signor/la Signora ${firstName}. Sono [NOME] di [AGENZIA] immobiliare. La contatto riguardo al suo immobile in ${address}. Riproverò a chiamarla nei prossimi giorni, oppure se preferisce può richiamarmi al [NUMERO]. Grazie e buona giornata.`
+      },
+      NON_INTERESSATO: {
+        whatsapp: `Gentile ${firstName}, La ringrazio per il tempo dedicatomi. Capisco che al momento non sia interessato, ma il mercato immobiliare cambia rapidamente. Se in futuro volesse una valutazione aggiornata di ${address}, sarò a disposizione. Le auguro una buona giornata. - [NOME], [AGENZIA]`,
+        voice: `Buongiorno ${firstName}, sono [NOME] di [AGENZIA]. So che in passato aveva indicato di non essere interessato alla vendita, ma volevo informarla che il mercato immobiliare nella sua zona ha avuto sviluppi interessanti. Se volesse una valutazione aggiornata e gratuita di ${address}, senza alcun impegno, sono a disposizione. Grazie per l'attenzione.`
+      },
+      DEFAULT: {
+        whatsapp: `Buongiorno ${firstName}, sono [NOME] di [AGENZIA]. La contatto riguardo al suo immobile in ${address}. Sarebbe interessato a una valutazione gratuita? Resto a disposizione per qualsiasi informazione.`,
+        voice: `Buongiorno, parlo con ${firstName}? Sono [NOME], consulente immobiliare di [AGENZIA]. La contatto perché operiamo nella sua zona e stiamo cercando immobili come il suo in ${address} per i nostri clienti. Le interesserebbe sapere quanto potrebbe valere oggi il suo immobile? La valutazione è completamente gratuita e senza impegno.`
+      }
+    };
+
+    return scripts[esito] || scripts.DEFAULT;
+  };
+
+  // Funzione per generare follow-up in base all'esito chiamata
+  const generateFollowUp = (esitoChiamata: string | null, ownerId: string, ownerName: string, ownerData: any = {}): any | null => {
+    if (!esitoChiamata) return null;
+
+    const esito = esitoChiamata.toUpperCase().trim();
+    const now = new Date();
+
+    let followUp: any = null;
+    let scriptKey = 'DEFAULT';
+
+    // Mapping esiti -> follow-up
+    // DA RICHIAMARE, RICHIAMARE, CALL_BACK -> Richiamata tra 2 giorni
+    if (esito.includes('RICHIAMARE') || esito.includes('CALL_BACK') || esito.includes('RICHIAMA')) {
+      const followUpDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+      scriptKey = 'RICHIAMARE';
+      followUp = {
+        owner_id: ownerId,
+        date: followUpDate.toISOString(),
+        type: 'CALL',
+        title: `Richiamare ${ownerName}`,
+        location: null,
+      };
+    }
+    // INTERESSATO, INTERESTED -> Appuntamento telefonico tra 1 giorno
+    else if (esito.includes('INTERESSATO') || esito.includes('INTERESTED') || esito.includes('INTERESSE')) {
+      const followUpDate = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+      scriptKey = 'INTERESSATO';
+      followUp = {
+        owner_id: ownerId,
+        date: followUpDate.toISOString(),
+        type: 'CALL',
+        title: `Follow-up interessamento - ${ownerName}`,
+        location: null,
+      };
+    }
+    // APPUNTAMENTO, APPOINTMENT, VISITA -> Visita tra 3 giorni
+    else if (esito.includes('APPUNTAMENTO') || esito.includes('APPOINTMENT') || esito.includes('VISITA')) {
+      const followUpDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      scriptKey = 'APPUNTAMENTO';
+      followUp = {
+        owner_id: ownerId,
+        date: followUpDate.toISOString(),
+        type: 'VISIT',
+        title: `Visita immobile - ${ownerName}`,
+        location: null,
+      };
+    }
+    // NON RISPONDE, NO_ANSWER, OCCUPATO -> Richiamata tra 1 giorno
+    else if (esito.includes('NON RISPONDE') || esito.includes('NO_ANSWER') || esito.includes('OCCUPATO') || esito.includes('ASSENTE')) {
+      const followUpDate = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+      scriptKey = 'NON_RISPONDE';
+      followUp = {
+        owner_id: ownerId,
+        date: followUpDate.toISOString(),
+        type: 'CALL',
+        title: `Ritentare chiamata - ${ownerName}`,
+        location: null,
+      };
+    }
+    // NON INTERESSATO, NOT_INTERESTED -> Follow-up tra 30 giorni (freddo)
+    else if (esito.includes('NON INTERESSATO') || esito.includes('NOT_INTERESTED') || esito.includes('RIFIUTA')) {
+      const followUpDate = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+      scriptKey = 'NON_INTERESSATO';
+      followUp = {
+        owner_id: ownerId,
+        date: followUpDate.toISOString(),
+        type: 'CALL',
+        title: `Ricontatto freddo - ${ownerName}`,
+        location: null,
+      };
+    }
+    // VENDUTO, DECEDUTO, ERRATO -> Nessun follow-up
+    else if (esito.includes('VENDUTO') || esito.includes('DECEDUTO') || esito.includes('ERRATO') || esito.includes('NUMERO ERRATO')) {
+      return null;
+    }
+    // Default: qualsiasi altro esito -> follow-up generico tra 7 giorni
+    else {
+      const followUpDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      followUp = {
+        owner_id: ownerId,
+        date: followUpDate.toISOString(),
+        type: 'CALL',
+        title: `Follow-up - ${ownerName} (${esitoChiamata})`,
+        location: null,
+      };
+    }
+
+    // Aggiungi gli script al follow-up
+    if (followUp) {
+      const scripts = generateScripts(scriptKey, ownerName, ownerData);
+      followUp.whatsappScript = scripts.whatsapp;
+      followUp.voiceScript = scripts.voice;
+    }
+
+    return followUp;
+  };
+
   const syncToSupabase = async () => {
     if (!supabase) {
       setParsingError('Supabase non configurato.');
@@ -229,7 +448,7 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
     }
     setSyncing(true);
     try {
-      const ownersToUpsert = parsedRows.map(mapRowToOwner).map((o: any) => ({
+      const allOwners = parsedRows.map(mapRowToOwner).map((o: any) => ({
         firstName: o.firstName,
         lastName: o.lastName,
         taxCode: o.taxCode || null,
@@ -237,17 +456,110 @@ export const UploadPage: React.FC<UploadPageProps> = ({ onCompleteNavigation }) 
         birthDate: o.birthDate || null,
         propertiesCount: o.propertiesCount || 0,
         suggestedAction: o.suggestedAction || null,
+        // Nuovi campi per importazione completa
+        address: o.address || null,
+        civico: o.civico || null,
+        consistenza: o.consistenza || null,
+        categoria: o.categoria || null,
+        quota: o.quota || null,
+        phone1: o.phone1 || null,
+        phone2: o.phone2 || null,
+        phone3: o.phone3 || null,
+        esitoChiamata: o.esitoChiamata || null,
+        notes: o.notes || null,
       }));
 
+      // Deduplica per taxCode - mantiene l'ultimo record per ogni codice fiscale
+      const uniqueByTaxCode = new Map<string, any>();
+      const ownersWithoutTaxCode: any[] = [];
+
+      allOwners.forEach((owner) => {
+        if (owner.taxCode) {
+          const key = owner.taxCode.toUpperCase().trim();
+          uniqueByTaxCode.set(key, owner);
+        } else {
+          ownersWithoutTaxCode.push(owner);
+        }
+      });
+
+      const ownersToUpsert = [...uniqueByTaxCode.values(), ...ownersWithoutTaxCode];
+
+      // STEP 1: Upsert owners
       const batchSize = 200;
       for (let i = 0; i < ownersToUpsert.length; i += batchSize) {
         const batch = ownersToUpsert.slice(i, i + batchSize);
-        const { data, error } = await supabase.from('owners').upsert(batch, { onConflict: 'taxCode' });
+        const { error } = await supabase.from('owners').upsert(batch, { onConflict: 'taxCode' });
         if (error) {
           handleSupabaseError(error, 'Errore upsert owners');
           setParsingError(error.message);
           setSyncing(false);
           return;
+        }
+      }
+
+      // STEP 2: Recupera gli owner appena inseriti per ottenere gli ID
+      const taxCodes = ownersToUpsert.filter(o => o.taxCode).map(o => o.taxCode.toUpperCase().trim());
+
+      if (taxCodes.length > 0) {
+        const { data: insertedOwners, error: fetchError } = await supabase
+          .from('owners')
+          .select('id, taxCode, firstName, lastName, address, civico, categoria, consistenza, quota, esitoChiamata')
+          .in('taxCode', taxCodes);
+
+        if (fetchError) {
+          console.error('Errore recupero owners:', fetchError);
+        } else if (insertedOwners && insertedOwners.length > 0) {
+          // STEP 3: Crea le properties per ogni owner che ha un indirizzo
+          const propertiesToInsert = insertedOwners
+            .filter((owner: any) => owner.address) // Solo se ha un indirizzo
+            .map((owner: any) => ({
+              owner_id: owner.id,
+              address: `${owner.address}${owner.civico ? ', ' + owner.civico : ''}`,
+              category: owner.categoria || 'Appartamento',
+              consistenza: owner.consistenza || null,
+              share: parseQuotaToShare(owner.quota),
+              estimatedValue: 0,
+            }));
+
+          if (propertiesToInsert.length > 0) {
+            // Prima elimina le properties esistenti per questi owner (evita duplicati)
+            const ownerIds = propertiesToInsert.map((p: any) => p.owner_id);
+            await supabase.from('properties').delete().in('owner_id', ownerIds);
+
+            // Inserisci le nuove properties
+            for (let i = 0; i < propertiesToInsert.length; i += batchSize) {
+              const batch = propertiesToInsert.slice(i, i + batchSize);
+              const { error: propError } = await supabase.from('properties').insert(batch);
+              if (propError) {
+                console.error('Errore inserimento properties:', propError);
+              }
+            }
+          }
+
+          // STEP 4: Crea follow-up/appuntamenti in base all'esito chiamata
+          const appointmentsToInsert = insertedOwners
+            .map((owner: any) => generateFollowUp(
+              owner.esitoChiamata,
+              owner.id,
+              `${owner.firstName} ${owner.lastName}`,
+              owner // Passa tutti i dati owner per generare gli script
+            ))
+            .filter((apt: any) => apt !== null);
+
+          if (appointmentsToInsert.length > 0) {
+            // Elimina appuntamenti esistenti creati da import precedenti (opzionale)
+            const ownerIdsWithFollowUp = appointmentsToInsert.map((a: any) => a.owner_id);
+            await supabase.from('appointments').delete().in('owner_id', ownerIdsWithFollowUp);
+
+            // Inserisci i nuovi appuntamenti
+            for (let i = 0; i < appointmentsToInsert.length; i += batchSize) {
+              const batch = appointmentsToInsert.slice(i, i + batchSize);
+              const { error: aptError } = await supabase.from('appointments').insert(batch);
+              if (aptError) {
+                console.error('Errore inserimento appointments:', aptError);
+              }
+            }
+          }
         }
       }
 

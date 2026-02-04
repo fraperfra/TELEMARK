@@ -41,7 +41,14 @@ const readEnv = (key: string, fallback: string) => {
   return fallback;
 };
 
-const supabaseUrl = readEnv('SUPABASE_URL', PROVIDED_URL);
+const rawSupabaseUrl = readEnv('SUPABASE_URL', PROVIDED_URL);
+let supabaseUrl = rawSupabaseUrl;
+try {
+  const isDev = !!(import.meta as any)?.env?.DEV;
+  if (isDev && typeof window !== 'undefined') {
+    supabaseUrl = `${window.location.origin}/supabase`;
+  }
+} catch (_) {}
 const supabaseAnonKey = readEnv('SUPABASE_ANON_KEY', PROVIDED_KEY);
 
 // Verifichiamo se la configurazione è presente

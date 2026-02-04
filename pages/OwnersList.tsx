@@ -46,6 +46,17 @@ CREATE TABLE IF NOT EXISTS owners (
   "lastContact" TEXT DEFAULT 'Mai contattato',
   "suggestedAction" TEXT,
   tags TEXT[] DEFAULT '{}',
+  -- Campi per importazione CSV
+  address TEXT,
+  civico TEXT,
+  consistenza TEXT,
+  categoria TEXT,
+  quota TEXT,
+  phone1 TEXT,
+  phone2 TEXT,
+  phone3 TEXT,
+  "esitoChiamata" TEXT,
+  notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
@@ -55,6 +66,7 @@ CREATE TABLE IF NOT EXISTS properties (
   owner_id UUID REFERENCES owners(id) ON DELETE CASCADE,
   address TEXT NOT NULL,
   category TEXT DEFAULT 'Appartamento',
+  consistenza TEXT,
   "estimatedValue" NUMERIC DEFAULT 0,
   share INTEGER DEFAULT 100,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
@@ -79,6 +91,8 @@ CREATE TABLE IF NOT EXISTS appointments (
   type TEXT CHECK (type IN ('VISIT', 'CALL', 'VIDEO', 'SIGNING')),
   title TEXT NOT NULL,
   location TEXT,
+  "whatsappScript" TEXT,
+  "voiceScript" TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
@@ -139,6 +153,20 @@ export const OwnersList: React.FC<OwnersListProps> = ({ onSelectOwner, onOpenMod
 
   useEffect(() => {
     fetchOwners();
+  }, []);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const channel = supabase
+      .channel('owners-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'owners' }, () => fetchOwners())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'properties' }, () => fetchOwners())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calls' }, () => fetchOwners())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, () => fetchOwners())
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const handleCopySQL = () => {
@@ -262,12 +290,12 @@ export const OwnersList: React.FC<OwnersListProps> = ({ onSelectOwner, onOpenMod
       {viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredOwners.length > 0 ? filteredOwners.map((owner) => (
-            <div 
+            <div
               key={owner.id}
               className="bg-white rounded-[2rem] p-7 shadow-sm border border-gray-100 hover:shadow-2xl transition-all cursor-pointer group"
               onClick={() => onSelectOwner(owner)}
             >
-              <div className="flex justify-between items-start mb-6">
+              <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center text-white font-black text-xl">
                     {owner.firstName.charAt(0)}{owner.lastName.charAt(0)}
@@ -279,7 +307,31 @@ export const OwnersList: React.FC<OwnersListProps> = ({ onSelectOwner, onOpenMod
                 </div>
                 {getTempBadge(owner.temperature)}
               </div>
-              <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-6">
+
+              {/* Info telefono principale */}
+              {(owner.phone1 || (owner.phones && owner.phones[0])) && (
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium">{owner.phone1 || owner.phones?.[0]}</span>
+                </div>
+              )}
+
+              {/* Info indirizzo */}
+              {owner.address && (
+                <div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
+                  <Building2 className="w-4 h-4 text-gray-400" />
+                  <span className="truncate">{owner.address}{owner.civico ? `, ${owner.civico}` : ''}</span>
+                </div>
+              )}
+
+              {/* Esito ultima chiamata */}
+              {owner.esitoChiamata && (
+                <div className="mb-3 px-2 py-1 bg-amber-50 border border-amber-100 rounded-lg text-xs font-bold text-amber-700 inline-block">
+                  {owner.esitoChiamata}
+                </div>
+              )}
+
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-4">
                 <div className="h-full bg-blue-600" style={{ width: `${owner.score}%` }} />
               </div>
               <button className="w-full bg-blue-600 text-white py-4 rounded-2xl font-black text-sm shadow-lg shadow-blue-100">Chiama</button>

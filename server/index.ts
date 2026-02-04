@@ -4,6 +4,8 @@ import twilio from 'twilio';
 import OpenAI from 'openai';
 import { createClient } from '@supabase/supabase-js';
 import config, { logConfig, printValidation } from './config';
+import authRoutes from './routes/auth';
+import { authMiddleware } from './middleware/auth';
 
 // Types
 interface AuthRequest extends Request {
@@ -51,6 +53,13 @@ const supabase = createClient(
   config.supabase.url!,
   config.supabase.serviceKey!
 );
+
+// ============================================
+// ROUTES
+// ============================================
+
+// Authentication routes (no auth required)
+app.use('/api/auth', authRoutes);
 
 // ============================================
 // HEALTH CHECK ENDPOINTS
@@ -434,6 +443,11 @@ app.listen(port, () => {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
   console.log('📚 Available endpoints:');
+  console.log('  POST /api/auth/register         - Register new user');
+  console.log('  POST /api/auth/login            - Login user');
+  console.log('  POST /api/auth/refresh          - Refresh token');
+  console.log('  POST /api/auth/logout           - Logout user');
+  console.log('  GET  /api/auth/me               - Get current user');
   console.log('  GET  /api/health                - Server health check');
   console.log('  GET  /api/health/detailed       - Detailed service status');
   console.log('  POST /api/notifications/email  - Send email');

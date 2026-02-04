@@ -9,6 +9,7 @@ import { RemindersPanel } from '@/components/notifications/RemindersPanel';
 
 // Pages
 import LoginPage from '@/pages/auth/LoginPage';
+import RegisterPage from '@/pages/auth/RegisterPage';
 import DashboardPage from '@/pages/DashboardPage';
 import CalendarPage from '@/pages/CalendarPage';
 import CampaignsPage from '@/pages/CampaignsPage';
@@ -47,6 +48,7 @@ function App() {
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/diagnostics" element={<DiagnosticsPage />} />
 
             {/* Protected routes */}

@@ -34,10 +34,12 @@ interface AuthContextType {
   organization: Organization | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, userData: any) => Promise<void>;
+  error: string | null;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signUp: (email: string, password: string, name: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -48,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -95,20 +98,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError && profileError.code !== 'PGRST116') {
+        console.error('Profile error:', profileError);
+        return;
+      }
 
-      setProfile(profileData);
+      if (profileData) {
+        setProfile(profileData);
 
-      // Load organization
-      if (profileData?.organization_id) {
-        const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
-          .select('*')
-          .eq('id', profileData.organization_id)
-          .single();
+        // Load organization
+        if (profileData?.organization_id) {
+          const { data: orgData, error: orgError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', profileData.organization_id)
+            .single();
 
-        if (orgError) throw orgError;
-        setOrganization(orgData);
+          if (orgError && orgError.code !== 'PGRST116') {
+            console.error('Organization error:', orgError);
+          } else if (orgData) {
+            setOrganization(orgData);
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading user data:', error);
@@ -123,37 +134,106 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function signIn(email: string, password: string) {
-    if (!supabase) throw new Error('Supabase not configured');
+  async function signIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    if (!supabase) return { success: false, error: 'Supabase not configured' };
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        const errorMessage = getAuthErrorMessage(error.code || error.message);
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      const errorMessage = err.message || 'Errore durante il login';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
   }
 
-  async function signUp(email: string, password: string, userData: any) {
-    if (!supabase) throw new Error('Supabase not configured');
+  async function signUp(email: string, password: string, name: string): Promise<{ success: boolean; error?: string }> {
+    if (!supabase) return { success: false, error: 'Supabase not configured' };
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: userData,
-      },
-    });
-    if (error) throw error;
+    setError(null);
+
+    try {
+      const { data: { user: authUser }, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+        },
+      });
+
+      if (signUpError) {
+        const errorMessage = getAuthErrorMessage(signUpError.code || signUpError.message);
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
+      }
+
+      if (authUser) {
+        // Create user profile
+        const { error: profileError } = await supabase.from('users').insert({
+          id: authUser.id,
+          email,
+          name,
+          role: 'agent',
+          is_active: true,
+        });
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Profile creation error:', profileError);
+        }
+      }
+
+      return { success: true };
+    } catch (err: any) {
+      const errorMessage = err.message || 'Errore durante la registrazione';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    }
   }
 
   async function signOut() {
     if (!supabase) return;
 
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    setUser(null);
-    setProfile(null);
-    setOrganization(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      setUser(null);
+      setProfile(null);
+      setOrganization(null);
+      setError(null);
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  }
+
+  function clearError() {
+    setError(null);
+  }
+
+  function getAuthErrorMessage(code: string): string {
+    const errorMessages: Record<string, string> = {
+      'invalid_credentials': 'Email o password non valida',
+      'user_already_exists': 'Questo account esiste già',
+      'weak_password': 'La password deve avere almeno 6 caratteri',
+      'email_not_confirmed': 'Conferma il tuo email prima di accedere',
+      'over_email_send_rate_limit': 'Troppi tentativi, riprova più tardi',
+      'user_banned': 'Questo account è stato disabilitato',
+    };
+    
+    return errorMessages[code] || 'Errore di autenticazione. Riprova più tardi.';
   }
 
   return (
@@ -164,10 +244,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         organization,
         session,
         loading,
+        error,
         signIn,
         signUp,
         signOut,
         refreshProfile,
+        clearError,
       }}
     >
       {children}

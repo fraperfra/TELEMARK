@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { SettingsTab } from '../types';
 import { 
   User, Building2, Users, Bell, Shield, 
   Plus, Copy, Edit2, Trash2, Check, 
@@ -23,8 +24,7 @@ const MOCK_AGENTS: Agent[] = [
   { id: '3', name: 'Davide Bruni', role: 'Agente Junior', accessCode: 'AG-1102', leads: 12, calls: 45, status: 'inactive' },
 ];
 
-export const SettingsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'profile' | 'agency' | 'team' | 'notifications'>('profile');
+export const SettingsPage: React.FC<{ activeTab?: SettingsTab }> = ({ activeTab = 'profile' }) => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   
   // Confirmation Modal State
@@ -53,37 +53,7 @@ export const SettingsPage: React.FC = () => {
         <p className="text-gray-500 font-medium">Gestisci il tuo profilo, l'agenzia e il tuo team di agenti ⚙️</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-8">
-        {/* Sidebar Tabs */}
-        <aside className="lg:w-64 flex flex-row lg:flex-col gap-2 overflow-x-auto no-scrollbar pb-2 lg:pb-0">
-          {[
-            { id: 'profile', label: 'Profilo Personale', icon: <User className="w-5 h-5" /> },
-            { id: 'agency', label: 'Agenzia', icon: <Building2 className="w-5 h-5" /> },
-            { id: 'team', label: 'Gestione Team', icon: <Users className="w-5 h-5" /> },
-            { id: 'notifications', label: 'Notifiche', icon: <Bell className="w-5 h-5" /> },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-sm transition-all whitespace-nowrap ${
-                activeTab === tab.id 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' 
-                  : 'text-gray-500 hover:bg-white hover:shadow-sm'
-              }`}
-            >
-              {tab.icon}
-              {tab.label}
-            </button>
-          ))}
-          <div className="hidden lg:block h-px bg-gray-200 my-4 mx-4" />
-          <button className="hidden lg:flex items-center gap-3 px-5 py-3.5 rounded-2xl font-bold text-sm text-red-500 hover:bg-red-50 transition-all">
-            <Shield className="w-5 h-5" />
-            Sicurezza Account
-          </button>
-        </aside>
-
-        {/* Content Area */}
-        <div className="flex-1 space-y-6">
+      <div className="space-y-6">
           {activeTab === 'profile' && (
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 space-y-8 animate-in fade-in duration-300">
               <div className="flex flex-col md:flex-row items-center gap-8">
@@ -312,7 +282,31 @@ export const SettingsPage: React.FC = () => {
               </div>
             </div>
           )}
-        </div>
+          {activeTab === 'security' && (
+            <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 space-y-6 animate-in fade-in duration-300">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-red-50 text-red-500 flex items-center justify-center">
+                  <Shield className="w-7 h-7" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">Sicurezza Account</h3>
+                  <p className="text-sm text-gray-500 font-medium">Gestisci accesso e protezione del profilo</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-2">
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Password</p>
+                  <p className="text-sm font-semibold text-gray-700">Ultimo cambio 14 giorni fa</p>
+                  <button className="text-sm font-bold text-blue-600 hover:underline">Aggiorna password</button>
+                </div>
+                <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 space-y-2">
+                  <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Accessi</p>
+                  <p className="text-sm font-semibold text-gray-700">Nessun accesso sospetto</p>
+                  <button className="text-sm font-bold text-blue-600 hover:underline">Mostra attività</button>
+                </div>
+              </div>
+            </div>
+          )}
       </div>
 
       {/* Confirmation Modal */}
