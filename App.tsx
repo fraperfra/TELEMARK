@@ -21,6 +21,7 @@ const App: React.FC = () => {
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
   const [modal, setModal] = useState<ModalState>({ type: null });
   const [settingsTab, setSettingsTab] = useState<SettingsTab>('profile');
+  const [callEndCallback, setCallEndCallback] = useState<((outcome: string) => void) | null>(null);
 
   // Inizializza scheduler per task giornalieri (8:00 genera, 20:00 chiude)
   useEffect(() => {
@@ -68,11 +69,15 @@ const App: React.FC = () => {
     }
   };
 
-  const openModal = (type: ModalType, owner?: Owner) => {
+  const openModal = (type: ModalType, owner?: Owner, onCallEnd?: (outcome: string) => void) => {
     setModal({ type, owner });
+    setCallEndCallback(onCallEnd ? () => onCallEnd : null);
   };
 
-  const closeModal = () => setModal({ type: null });
+  const closeModal = () => {
+    setModal({ type: null });
+    setCallEndCallback(null);
+  };
   const handleOpenSettings = () => {
     setCurrentView('SETTINGS');
     setSettingsTab('profile');
@@ -109,7 +114,7 @@ const App: React.FC = () => {
         return (
           <DailyTasksPage
             onSelectOwner={(ownerId) => navigateToOwner(ownerId)}
-            onOpenCallModal={(owner) => openModal('CALL_OWNER', owner)}
+            onOpenCallModal={(owner, onCallEnd) => openModal('CALL_OWNER', owner, onCallEnd)}
           />
         );
       case 'OWNERS_LIST':
@@ -166,11 +171,12 @@ const App: React.FC = () => {
         owner={modal.owner} 
         onSaved={refreshSelectedOwner}
       />
-      <CallModal 
-        isOpen={modal.type === 'CALL_OWNER' || modal.type === 'BULK_CALL'} 
-        onClose={closeModal} 
-        owner={modal.owner} 
+      <CallModal
+        isOpen={modal.type === 'CALL_OWNER' || modal.type === 'BULK_CALL'}
+        onClose={closeModal}
+        owner={modal.owner}
         onSaved={refreshSelectedOwner}
+        onCallEnd={callEndCallback || undefined}
       />
       <AppointmentModal 
         isOpen={modal.type === 'ADD_APPOINTMENT'} 

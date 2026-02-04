@@ -157,7 +157,7 @@ interface OutcomeOption {
   borderClass: string;
 }
 
-export const CallModal: React.FC<{ isOpen: boolean; onClose: () => void; owner?: Owner; onSaved?: (ownerId: string) => void }> = ({ isOpen, onClose, owner, onSaved }) => {
+export const CallModal: React.FC<{ isOpen: boolean; onClose: () => void; owner?: Owner; onSaved?: (ownerId: string) => void; onCallEnd?: (outcome: string) => void }> = ({ isOpen, onClose, owner, onSaved, onCallEnd }) => {
   // Stati base
   const [callState, setCallState] = useState<'idle' | 'calling' | 'recording' | 'ended'>('idle');
   const [seconds, setSeconds] = useState(0);
@@ -429,6 +429,11 @@ export const CallModal: React.FC<{ isOpen: boolean; onClose: () => void; owner?:
           esitoChiamata: outcome
         })
         .eq('id', owner.id);
+
+      // Callback per archiviazione task (se chiamato da DailyTasksPage)
+      if (onCallEnd && outcome) {
+        onCallEnd(outcome);
+      }
 
       onSaved?.(owner.id);
       onClose();
