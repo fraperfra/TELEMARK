@@ -5,7 +5,7 @@ import {
   CheckCircle2, XCircle, Clock, AlertCircle,
   ChevronDown, PhoneOff, Building2, UserX,
   HelpCircle, Home, Ban, Ghost, Mic, MicOff,
-  Play, Pause, StopCircle, FileText, Volume2
+  Play, Pause, StopCircle, FileText
 } from 'lucide-react';
 import { Owner, ModalType } from '../types';
 import { supabase } from '../lib/supabase';
@@ -620,16 +620,6 @@ export const CallModal: React.FC<{ isOpen: boolean; onClose: () => void; owner?:
                 placeholder="Note sulla chiamata..."
               />
             </div>
-
-            {/* Audio preview */}
-            {audioBlob && (
-              <div className="bg-gray-50 p-3 rounded-xl">
-                <div className="flex items-center gap-3">
-                  <Volume2 className="w-4 h-4 text-gray-500" />
-                  <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1 h-8" />
-                </div>
-              </div>
-            )}
 
             <div className="pt-2 flex gap-3">
               <button onClick={onClose} className="flex-1 py-3 rounded-xl font-bold text-gray-400 hover:bg-gray-50 transition-all text-sm">
