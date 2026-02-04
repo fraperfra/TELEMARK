@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Users, Phone, Calendar, Upload, Settings, X, ChevronRight, Download, Plus } from 'lucide-react';
+import { LayoutDashboard, Users, Phone, Calendar, Upload, Settings, X, ChevronRight, Download, Plus, ClipboardList } from 'lucide-react';
 import { SettingsTab, ViewState } from '../types';
 
 interface SidebarProps {
@@ -22,6 +22,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const menuItems = [
     { id: 'DASHBOARD' as ViewState, icon: LayoutDashboard, emoji: '📊', label: 'Dashboard' },
+    { id: 'DAILY_TASKS' as ViewState, icon: ClipboardList, emoji: '📋', label: 'Task Giornalieri' },
     { id: 'OWNERS_LIST' as ViewState, icon: Users, emoji: '👥', label: 'Proprietari' },
     { id: 'CALENDAR' as ViewState, icon: Calendar, emoji: '📅', label: 'Calendario' },
     { id: 'UPLOAD' as ViewState, icon: Upload, emoji: '⬆️', label: 'Upload' },
@@ -30,9 +31,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const mobileMenuItems = [
     { id: 'DASHBOARD' as ViewState, icon: LayoutDashboard, label: 'Home' },
+    { id: 'DAILY_TASKS' as ViewState, icon: ClipboardList, label: 'Task' },
     { id: 'OWNERS_LIST' as ViewState, icon: Users, label: 'Contatti' },
     { id: 'CALENDAR' as ViewState, icon: Calendar, label: 'Agenda' },
-    { id: 'UPLOAD' as ViewState, icon: Upload, label: 'Upload' },
     { id: 'SETTINGS' as ViewState, icon: Settings, label: 'Menu' },
   ];
 

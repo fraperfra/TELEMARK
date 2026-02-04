@@ -63,7 +63,7 @@ export interface Owner {
   updated_at?: string;
 }
 
-export type ViewState = 'DASHBOARD' | 'OWNERS_LIST' | 'OWNER_DETAIL' | 'CALENDAR' | 'UPLOAD' | 'SETTINGS';
+export type ViewState = 'DASHBOARD' | 'OWNERS_LIST' | 'OWNER_DETAIL' | 'CALENDAR' | 'UPLOAD' | 'SETTINGS' | 'DAILY_TASKS';
 export type SettingsTab = 'profile' | 'agency' | 'team' | 'notifications' | 'security';
 
 export type ModalType = 'ADD_OWNER' | 'CALL_OWNER' | 'ADD_APPOINTMENT' | 'EDIT_OWNER' | 'BULK_CALL' | 'ADD_PROPERTY' | null;
