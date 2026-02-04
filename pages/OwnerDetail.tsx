@@ -168,7 +168,7 @@ export const OwnerDetail: React.FC<OwnerDetailProps> = ({ owner, onBack, onOpenM
                     className={owner.score >= 80 ? 'text-red-500' : 'text-blue-500'}
                   />
                 </svg>
-                <div className="absolute inset-0 flex flex-col items-center justify-center transform rotate-90">
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-3xl font-bold">{owner.score}</span>
                   <span className="text-[10px] font-bold text-gray-400 uppercase">Punti</span>
                 </div>
