@@ -58,9 +58,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col h-screen sticky top-0">
         <div className="p-6 flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-200">
-            I
+            T
           </div>
-          <span className="font-black text-gray-800 text-lg">ImmoCRM</span>
+          <span className="font-black text-gray-800 text-lg">TeleMarket</span>
         </div>
 
         <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">
@@ -166,7 +166,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <Download className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <p className="text-white font-bold text-sm">Installa ImmoCRM</p>
+              <p className="text-white font-bold text-sm">Installa TeleMarket</p>
               <p className="text-white/70 text-xs">Accesso rapido dalla home</p>
             </div>
             <button

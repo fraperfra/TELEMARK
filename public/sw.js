@@ -1,4 +1,4 @@
-const CACHE_NAME = 'immocrm-v1';
+const CACHE_NAME = 'telemarket-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -102,7 +102,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'ImmoCRM', options)
+    self.registration.showNotification(data.title || 'TeleMarket', options)
   );
 });
 

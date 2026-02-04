@@ -1,6 +1,6 @@
 {
-  "name": "ImmoCRM Telemarketing",
-  "short_name": "ImmoCRM",
+  "name": "TeleMarket Telemarketing",
+  "short_name": "TeleMarket",
   "description": "CRM Telemarketing per Agenzie Immobiliari",
   "start_url": "/",
   "display": "standalone",

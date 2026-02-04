@@ -320,9 +320,9 @@ export const Header: React.FC<HeaderProps> = ({ username, userId, onOpenSettings
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">
-              I
+              T
             </div>
-            <span className="font-black text-gray-800">ImmoCRM</span>
+            <span className="font-black text-gray-800">TeleMarket</span>
           </div>
 
           {/* Mobile Actions */}
