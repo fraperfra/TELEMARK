@@ -8,20 +8,23 @@ export const CalendarPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Calendario Appuntamenti</h1>
-          <p className="text-gray-500">Gestisci i tuoi sopralluoghi e call pianificate 📅</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex items-center">
-            <button onClick={() => setView('month')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${view === 'month' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}>Mese</button>
-            <button onClick={() => setView('week')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${view === 'week' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}>Settimana</button>
-            <button onClick={() => setView('day')} className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${view === 'day' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}>Giorno</button>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Calendario</h1>
+            <p className="text-sm text-gray-500 hidden sm:block">Gestisci i tuoi sopralluoghi e call pianificate 📅</p>
           </div>
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all">
-            <Plus className="w-4 h-4" /> Nuovo Appuntamento
+          {/* Mobile: icon only, Desktop: full button */}
+          <button className="flex items-center justify-center gap-2 bg-blue-600 text-white p-3 md:px-5 md:py-2.5 rounded-xl font-bold shadow-lg shadow-blue-100 hover:bg-blue-700 active:scale-95 transition-all">
+            <Plus className="w-5 h-5 md:w-4 md:h-4" />
+            <span className="hidden md:inline text-sm">Nuovo</span>
           </button>
+        </div>
+        {/* View Toggle - Full width on mobile */}
+        <div className="bg-white p-1 rounded-xl shadow-sm border border-gray-200 flex items-center w-full md:w-auto md:self-start">
+          <button onClick={() => setView('month')} className={`flex-1 md:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${view === 'month' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}>Mese</button>
+          <button onClick={() => setView('week')} className={`flex-1 md:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${view === 'week' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}>Sett.</button>
+          <button onClick={() => setView('day')} className={`flex-1 md:flex-none px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-bold transition-all ${view === 'day' ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'text-gray-500 hover:bg-gray-50'}`}>Giorno</button>
         </div>
       </div>
 
