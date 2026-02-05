@@ -206,48 +206,89 @@ export const SettingsPage: React.FC<{ activeTab?: SettingsTab }> = ({ activeTab 
           )}
 
           {activeTab === 'agency' && (
-            <div className="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-8 space-y-8 animate-in zoom-in-95 duration-300">
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-blue-100 rounded-3xl flex items-center justify-center text-blue-600">
-                  <Building2 className="w-10 h-10" />
+            <div className="bg-white rounded-2xl md:rounded-[2.5rem] shadow-sm border border-gray-100 p-4 md:p-8 space-y-6 md:space-y-8 animate-in zoom-in-95 duration-300">
+              {/* Header Agenzia - Mobile Friendly */}
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 text-center sm:text-left">
+                <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl md:rounded-3xl flex items-center justify-center text-white shadow-lg shadow-blue-200">
+                  <Building2 className="w-8 h-8 md:w-10 md:h-10" />
                 </div>
-                <div>
-                  <h3 className="text-xl font-black text-gray-900">ImmoAgency Milano</h3>
-                  <p className="text-sm text-gray-500 font-medium">Sede Centrale - Via Dante 12, Milano</p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Nome Agenzia</label>
-                  <input type="text" defaultValue="ImmoAgency Milano" className="w-full bg-gray-50 border-gray-100 rounded-2xl py-3.5 px-4 font-bold text-gray-700 outline-none" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Partita IVA</label>
-                  <input type="text" defaultValue="01234567890" className="w-full bg-gray-50 border-gray-100 rounded-2xl py-3.5 px-4 font-bold text-gray-700 outline-none" />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Sito Web</label>
-                  <div className="relative">
-                    <input type="text" defaultValue="https://www.immoagency-milano.it" className="w-full bg-gray-50 border-gray-100 rounded-2xl py-3.5 px-4 font-bold text-gray-700 outline-none pr-12" />
-                    <ExternalLink className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                <div className="flex-1">
+                  <h3 className="text-lg md:text-xl font-black text-gray-900">ImmoAgency Milano</h3>
+                  <p className="text-xs md:text-sm text-gray-500 font-medium">Sede Centrale - Via Dante 12, Milano</p>
+                  <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-bold">
+                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                      Attiva
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-medium">ID: #AGZ-00421</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-gray-100 flex flex-col md:flex-row gap-4">
-                 <div className="flex-1 bg-gray-50 rounded-2xl p-6 border border-gray-100">
-                    <h5 className="font-black text-gray-900 mb-2">Abbonamento Pro</h5>
-                    <p className="text-sm text-gray-500 font-medium mb-4">Il tuo piano scade tra 240 giorni. Include agenti illimitati.</p>
-                    <button className="text-blue-600 font-black text-xs uppercase tracking-widest hover:underline">Gestisci Fatturazione</button>
-                 </div>
-                 <div className="flex-1 bg-blue-50 rounded-2xl p-6 border border-blue-100">
-                    <h5 className="font-black text-blue-900 mb-2">Statistiche Agenzia</h5>
-                    <div className="flex justify-between items-end">
-                       <span className="text-3xl font-black text-blue-600">4.8k</span>
-                       <span className="text-[10px] font-black text-blue-400 uppercase pb-1">Lead Totali</span>
+              {/* Form Dati Agenzia */}
+              <div className="grid grid-cols-1 gap-4 md:gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Nome Agenzia</label>
+                  <input type="text" defaultValue="ImmoAgency Milano" className="w-full bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl py-3 md:py-3.5 px-4 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Partita IVA</label>
+                    <input type="text" defaultValue="01234567890" className="w-full bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl py-3 md:py-3.5 px-4 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Telefono</label>
+                    <input type="tel" defaultValue="+39 02 1234567" className="w-full bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl py-3 md:py-3.5 px-4 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Sito Web</label>
+                  <div className="relative">
+                    <input type="text" defaultValue="https://www.immoagency-milano.it" className="w-full bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl py-3 md:py-3.5 px-4 pr-12 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all text-sm" />
+                    <ExternalLink className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 w-4 h-4" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest px-1">Indirizzo</label>
+                  <input type="text" defaultValue="Via Dante 12, 20121 Milano MI" className="w-full bg-gray-50 border border-gray-100 rounded-xl md:rounded-2xl py-3 md:py-3.5 px-4 font-bold text-gray-700 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all" />
+                </div>
+              </div>
+
+              {/* Stats Cards - Mobile Optimized */}
+              <div className="pt-4 md:pt-6 border-t border-gray-100 space-y-3 md:space-y-0 md:flex md:gap-4">
+                {/* Abbonamento Card */}
+                <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-gray-100">
+                  <div className="flex items-start justify-between mb-3">
+                    <h5 className="font-black text-gray-900 text-sm md:text-base">Abbonamento Pro</h5>
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-[9px] font-bold uppercase">Attivo</span>
+                  </div>
+                  <p className="text-xs md:text-sm text-gray-500 font-medium mb-3 md:mb-4">Il tuo piano scade tra <span className="text-gray-700 font-bold">240 giorni</span>. Include agenti illimitati.</p>
+                  <button className="w-full sm:w-auto bg-white border border-gray-200 text-gray-700 px-4 py-2.5 rounded-xl font-bold text-xs hover:bg-gray-50 active:scale-95 transition-all">
+                    Gestisci Fatturazione
+                  </button>
+                </div>
+
+                {/* Statistiche Card */}
+                <div className="flex-1 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl md:rounded-2xl p-4 md:p-6 border border-blue-100">
+                  <h5 className="font-black text-blue-900 mb-3 text-sm md:text-base">Statistiche Agenzia</h5>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white/60 rounded-xl p-3 text-center">
+                      <span className="text-2xl md:text-3xl font-black text-blue-600 block">4.8k</span>
+                      <span className="text-[9px] md:text-[10px] font-bold text-blue-400 uppercase">Lead Totali</span>
                     </div>
-                 </div>
+                    <div className="bg-white/60 rounded-xl p-3 text-center">
+                      <span className="text-2xl md:text-3xl font-black text-blue-600 block">12</span>
+                      <span className="text-[9px] md:text-[10px] font-bold text-blue-400 uppercase">Agenti</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Save Button - Mobile Fixed Bottom */}
+              <div className="flex justify-end pt-2">
+                <button className="w-full sm:w-auto bg-blue-600 text-white px-8 py-3.5 md:py-4 rounded-xl md:rounded-2xl font-black text-sm shadow-lg shadow-blue-200 hover:bg-blue-700 active:scale-95 transition-all">
+                  Salva Modifiche
+                </button>
               </div>
             </div>
           )}
